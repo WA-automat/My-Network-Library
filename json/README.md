@@ -1,5 +1,7 @@
 # json文件夹
 
+一个Json解释器（json parser）
+
 主要包含四个文件: json.h、Object.hpp、JSON.hpp、JsonUtils.hpp、
 
 其中json.h主要作用是引用后三个.hpp文件，在.cpp文件中调用，一般直接调用json.h文件

@@ -1,5 +1,13 @@
 # utils文件夹
 
+一些工具类，目前包括
+
+> 响应体类
+>
+> 阻塞队列
+
+
+
 包含文件: response.h、Response.hpp、BlockQueue.hpp
 
 response.h用于引用response/Response.hpp，在.cpp文件中调用，一般直接调用response.h文件
