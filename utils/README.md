@@ -1,7 +1,11 @@
 # utils文件夹
 
-包含文件: response.h、Response.hpp
+包含文件: response.h、Response.hpp、BlockQueue.hpp
 
-response.h用于引用Response.hpp，在.cpp文件中调用，一般直接调用response.h文件
+response.h用于引用response/Response.hpp，在.cpp文件中调用，一般直接调用response.h文件
 
-Response.hpp包含Response类，继承自../json/JSON.hpp中的JSON类，响应体也是一个JSON
+response文件夹中的Response.hpp包含Response类，继承自../json/JSON.hpp中的JSON类，响应体也是一个JSON
+
+
+
+threadPool文件夹中的BlockQueue.hpp包含BlockQueue类，实现阻塞队列
