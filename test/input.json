@@ -1,0 +1,8 @@
+{
+	"msg" : "my json parser",
+	"code" : "200",
+	"data" : {
+		"name" : "lin",
+		"age" : "19"
+	}
+}
