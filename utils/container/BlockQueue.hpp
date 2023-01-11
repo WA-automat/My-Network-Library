@@ -33,11 +33,11 @@ public:
 	}
 
 	// 在阻塞队列队尾插入一个元素
-	void push(const T& x) {
+	void emplace(const T& x) {
 
 		// 加锁
 		unique_lock<mutex> ul(mx);
-		_q.push_back(x);
+		_q.emplace_back(x);
 		cv.notify_all();
 
 #ifdef DEBUG
@@ -47,11 +47,11 @@ public:
 	}
 
 	// 在阻塞队列队尾插入一个元素
-	void push(T&& x) {
+	void emplace(T&& x) {
 
 		// 加锁
 		unique_lock<mutex> ul(mx);
-		_q.push_back(std::move(x));
+		_q.emplace_back(std::move(x));
 		cv.notify_all();
 
 #ifdef DEBUG
@@ -60,7 +60,7 @@ public:
 
 	}
 
-	// 从阻塞队列队头删除一个元素
+	// 从阻塞队列队头删除一个元素（拉取）
 	// 在多线程编程时当有多个线程访问一个队列时如果队列为空
 	// 则获取队列中元素的方法就会阻塞，直到队列中有元素可以获取
 	T pull(void) {
@@ -95,6 +95,17 @@ public:
 #endif // DEBUG
 
 		return _q.size();
+
+	}
+
+	// 清空阻塞队列
+	void clear(void) {
+		
+		// 加锁
+		unique_lock<mutex> ul(mx);
+
+		// 清空队列
+		_q.clear();
 
 	}
 
