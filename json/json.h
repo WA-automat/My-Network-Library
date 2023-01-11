@@ -1,6 +1,6 @@
 #pragma once
 
-#include"JSON.hpp"
-#include"JsonUtils.hpp"
-#include"Object.hpp"
+#include"hpp/JSON.hpp"
+#include"hpp/JsonUtils.hpp"
+#include"hpp/Object.hpp"
 

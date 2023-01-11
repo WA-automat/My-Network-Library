@@ -1,7 +1,11 @@
+// µ÷ÊÔ×´Ì¬
+#define DEBUG
+
 #include<iostream>
 #include<future>
 #include<Windows.h>
-#include"../utils/threadPool/BlockQueue.hpp"
+#include"../utils/container.h"
+
 using namespace std;
 int main(void) {
 

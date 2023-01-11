@@ -16,8 +16,21 @@ class BlockQueue {
 public:
 
 	// 构造函数与析构函数使用默认值
-	BlockQueue() = default;
-	~BlockQueue() = default;
+	BlockQueue() {
+
+#ifdef DEBUG
+		cout << "[Debug]:Create BlockQueue!" << endl;
+#endif // DEBUG
+
+	}
+
+	~BlockQueue() {
+
+#ifdef DEBUG
+		cout << "[Debug]:Destory BlockQueue!" << endl;
+#endif // DEBUG
+
+	}
 
 	// 在阻塞队列队尾插入一个元素
 	void push(const T& x) {
@@ -26,6 +39,10 @@ public:
 		unique_lock<mutex> ul(mx);
 		_q.push_back(x);
 		cv.notify_all();
+
+#ifdef DEBUG
+		cout << "[Debug]:Push success!" << endl;
+#endif // DEBUG
 
 	}
 
@@ -36,7 +53,11 @@ public:
 		unique_lock<mutex> ul(mx);
 		_q.push_back(std::move(x));
 		cv.notify_all();
-	
+
+#ifdef DEBUG
+		cout << "[Debug]:Push success!" << endl;
+#endif // DEBUG
+
 	}
 
 	// 从阻塞队列队头删除一个元素
@@ -56,6 +77,10 @@ public:
 		// 删除队头元素
 		_q.pop_front();
 
+#ifdef DEBUG
+		cout << "[Debug]:Pull success!" << endl;
+#endif // DEBUG
+
 		return front;
 	}
 
@@ -64,6 +89,11 @@ public:
 
 		// 加锁
 		unique_lock<mutex> ul(mx);
+
+#ifdef DEBUG
+		cout << "[Debug]:Get size success!" << endl;
+#endif // DEBUG
+
 		return _q.size();
 
 	}

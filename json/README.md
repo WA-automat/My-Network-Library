@@ -2,9 +2,13 @@
 
 一个Json解释器（json parser）
 
-主要包含四个文件: json.h、Object.hpp、JSON.hpp、JsonUtils.hpp、
+
 
 其中json.h主要作用是引用后三个.hpp文件，在.cpp文件中调用，一般直接调用json.h文件
+
+
+
+hpp文件夹：
 
 Object.hpp定义Object类，用于存储一个字符串（这里使用string）、数组（这里使用vector\<Object\>代替）、对象（这里使用map\<string, Object\>代替）
 

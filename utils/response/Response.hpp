@@ -1,6 +1,6 @@
 #pragma once
 
-#include"../../json/JSON.hpp"
+#include"../../json/hpp/JSON.hpp"
 
 class Response : public JSON {
 public:
@@ -8,22 +8,42 @@ public:
 		this->push("msg", msg);
 		this->push("code", code);
 		this->push("data", data);
+
+#ifdef DEBUG
+		cout << "[Debug]:Create ResponseResult!" << endl;
+#endif // DEBUG
+
 	}
 
 	
 	// 设置提示信息
 	void setMsg(string msg) {
 		(*this)["msg"] = msg;
+
+#ifdef DEBUG
+		cout << "[Debug]:Set Message!" << endl;
+#endif // DEBUG
+
 	}
 
 	// 设置状态码
 	void setCode(string code) {
 		(*this)["code"] = code;
+
+#ifdef DEBUG
+		cout << "[Debug]:Set Code!" << endl;
+#endif // DEBUG
+
 	}
 
 	// 设置数据
 	void setData(Object data) {
 		(*this)["data"] = data;
+
+#ifdef DEBUG
+		cout << "[Debug]:Set Data!" << endl;
+#endif // DEBUG
+
 	}
 
 

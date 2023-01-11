@@ -14,24 +14,23 @@ class Object {
 public:
 
 	// 默认构造函数
-	Object() :_type(0) {}
+	Object() :_type(1), str_val("") {}
 
 	// 字符串构造函数
 	Object(string& val) :_type(1), str_val(val) {}
-	Object(string&& val) :_type(1), str_val(val) {}
 	Object(const string& val) :_type(1), str_val(val) {}
-	Object(const string&& val) :_type(1), str_val(val) {}
+	Object(string&& val) :_type(1), str_val(val) {}
 
 	// 字符串委托构造函数
 	Object(char str[]) :Object(string(str)) {}
 	Object(const char str[]) :Object(string(str)) {}
 
 	// 数组构造函数
-	Object(vector<Object>& list) :_type(2), array_val(list) {}
+	Object(const vector<Object>& list) :_type(2), array_val(list) {}
 	Object(vector<Object>&& list) :_type(2), array_val(list) {}
 
 	// JSON转换为Object用这个构造函数
-	Object(map<string, Object>& json) : _type(3), obj_val(json) {}
+	Object(const map<string, Object>& json) : _type(3), obj_val(json) {}
 	Object(map<string, Object>&& json) : _type(3), obj_val(json) {}
 
 
@@ -43,8 +42,10 @@ public:
 	// 静态函数
 
 	// 用于将字符串转换成对象类型的静态函数
-	static Object parseObject(string objectString);
-	static Object parseObject(string objectString, int left, int right);
+	static Object parseObject(const string& objectString);
+	static Object parseObject(string&& objectString);
+	static Object parseObject(const string& objectString, int left, int right);
+	static Object parseObject(string&& objectString, int left, int right);
 
 
 
@@ -74,10 +75,16 @@ public:
 	// operator[]
 
 	// 根据数字求数组的第idx个值
-	Object& operator[](int idx);
+	Object& operator[](const int& idx);
+
+	// 根据数字求数组的第idx个值
+	Object& operator[](int&& idx);
 
 	// 根据字符串求对象的值
-	Object& operator[](string idx);
+	Object& operator[](const string& idx);
+
+	// 根据字符串求对象的值
+	Object& operator[](string&& idx);
 
 
 	// 私有成员
@@ -98,11 +105,15 @@ private:
 
 };
 
-inline Object Object::parseObject(string objectString) {
+inline Object Object::parseObject(const string& objectString) {
 	return parseObject(objectString, 0, objectString.size() - 1);
 }
 
-Object Object::parseObject(string objectString, int left, int right) {
+inline Object Object::parseObject(string&& objectString) {
+	return parseObject(std::move(objectString), 0, objectString.size() - 1);
+}
+
+Object Object::parseObject(const string& objectString, int left, int right) {
 
 	// 当这个对象是字符串
 	if (objectString[left] == '\"' && objectString[right] == '\"') {
@@ -311,6 +322,215 @@ Object Object::parseObject(string objectString, int left, int right) {
 	return Object();
 }
 
+Object Object::parseObject(string&& objectString, int left, int right) {
+
+	// 当这个对象是字符串
+	if (objectString[left] == '\"' && objectString[right] == '\"') {
+
+		// 直接返回字符串
+		return Object(objectString.substr(left + 1, right - left - 1));
+
+	}
+
+	// 当这个对象是数组
+	else if (objectString[left] == '[' && objectString[right] == ']') {
+
+		// 用于存储最后的结果
+		vector<Object> arr;
+
+		// 栈区：用于存储左符号并判断是否合法
+		stack<char> box;
+
+		// 当前对象的第一个字符的索引
+		// 初始的第一个字符为objectString[left + 1]
+		int last = left + 1;
+
+		// 遍历字符串
+		for (int i = left + 1; i <= right - 1; ++i) {
+
+			// 当为双引号时
+			if (objectString[i] == '\"') {
+				if (box.empty()) box.push(objectString[i]);
+				else if (box.top() == '\"') box.pop();
+				else box.push(objectString[i]);
+			}
+
+			// 当为左半括号时
+			else if (objectString[i] == '[' || objectString[i] == '{') box.push(objectString[i]);
+
+			// 当为右半中括号时
+			else if (objectString[i] == ']') {
+				if (box.empty()) {
+					cerr << "[error]:Invalid string!" << endl;
+					throw runtime_error("Invalid string!");
+				}
+				else if (box.top() == '[') box.pop();
+				else {
+					cerr << "[error]:Invalid string!" << endl;
+					throw runtime_error("Invalid string!");
+				}
+			}
+
+			// 当为右半大括号时
+			else if (objectString[i] == '}') {
+				if (box.empty()) {
+					cerr << "[error]:Invalid string!" << endl;
+					throw runtime_error("Invalid string!");
+				}
+				else if (box.top() == '{') box.pop();
+				else {
+					cerr << "[error]:Invalid string!" << endl;
+					throw runtime_error("Invalid string!");
+				}
+			}
+
+			// 当栈区为空
+			// 说明已经前后匹配，需要可以进行Object的提取
+			if (box.empty()) {
+
+				// 提取出对象
+				Object obj = parseObject(std::move(objectString), last, i);
+
+				// 加入数组中
+				arr.emplace_back(std::move(obj));
+
+				// 当匹配成功之后，后面肯定会有一个逗号，需要跳过
+				last = i + 2, ++i;
+
+			}
+
+		}
+
+		// 栈不为空
+		if (!box.empty()) {
+			cerr << "[error]:Invalid string!" << endl;
+			throw runtime_error("Invalid string!");
+		}
+
+		// 返回结果
+		return Object(arr);
+
+	}
+
+	// 当这个对象是键值对的对象map
+	else if (objectString[left] == '{' && objectString[right] == '}') {
+
+		// 用于存储最后的结果
+		map<string, Object> obj;
+
+		// 栈区：用于存储左符号并判断是否合法
+		stack<char> box;
+
+		// 当前对象的第一个字符的索引
+		// 初始的第一个字符为objectString[left + 1]
+		int keyLeft = left + 1, keyRight, valueLeft, valueRight;
+		int last = left + 1;
+
+		// 用于判断当前对象是key还是value
+		// 初始为key，用true表示
+		// value用false表示
+		bool flag = true;
+
+		// 遍历字符串
+		for (int i = left + 1; i <= right - 1; ++i) {
+
+			// 当为双引号时
+			if (objectString[i] == '\"') {
+				if (box.empty()) box.push(objectString[i]);
+				else if (box.top() == '\"') box.pop();
+				else box.push(objectString[i]);
+			}
+
+			// 当为左半括号时
+			else if (objectString[i] == '[' || objectString[i] == '{') box.push(objectString[i]);
+
+			// 当为右半中括号时
+			else if (objectString[i] == ']') {
+				if (box.empty()) {
+					cerr << "[error]:Invalid string!" << endl;
+					throw runtime_error("Invalid string!");
+				}
+				else if (box.top() == '[') box.pop();
+				else {
+					cerr << "[error]:Invalid string!" << endl;
+					throw runtime_error("Invalid string!");
+				}
+			}
+
+			// 当为右半大括号时
+			else if (objectString[i] == '}') {
+				if (box.empty()) {
+					cerr << "[error]:Invalid string!" << endl;
+					throw runtime_error("Invalid string!");
+				}
+				else if (box.top() == '{') box.pop();
+				else {
+					cerr << "[error]:Invalid string!" << endl;
+					throw runtime_error("Invalid string!");
+				}
+			}
+
+			// 当栈区为空
+			// 说明已经前后匹配，可以进行key或value的提取
+			if (box.empty()) {
+
+				// 若为key
+				if (flag) {
+
+					// 更改边界
+					keyRight = i, valueLeft = i + 2;
+
+				}
+
+				// 若为value
+				else {
+
+					// 更改边界
+					valueRight = i;
+
+					// 提取出键和值
+					Object key = parseObject(std::move(objectString), keyLeft, keyRight);
+					Object value = parseObject(std::move(objectString), valueLeft, valueRight);
+
+					// 添加到map中
+					obj[string(key)] = value;
+
+					// 更新最新的键的左半边
+					keyLeft = i + 2;
+
+				}
+
+				// 当匹配成功之后，后面肯定会有一个逗号或冒号，需要跳过
+				last = i + 2, ++i;
+
+				// 改变flag
+				flag = !flag;
+
+			}
+
+		}
+
+		// 栈不为空
+		if (!box.empty()) {
+			cerr << "[error]:Invalid string!" << endl;
+			throw runtime_error("Invalid string!");
+		}
+
+		// 返回结果
+		return Object(obj);
+
+	}
+
+	// 否则，这是一个不正常的对象字符串
+	// 抛出异常
+	else {
+		cerr << "[error]:Invalid string!" << endl;
+		throw runtime_error("Invalid string!");
+	}
+
+	return Object();
+}
+
 inline int Object::getType(void) {
 	// 获取当前类型
 	return this->_type;
@@ -363,6 +583,11 @@ inline Object Object::getKey(void) {
 	}
 	vector<Object> result;
 	for (auto [key, val] : this->obj_val) result.emplace_back(key);
+
+#ifdef DEBUG
+	cout << "[Debug]:Get key success!" << endl;
+#endif // DEBUG
+
 	return std::move(result);
 }
 
@@ -424,7 +649,7 @@ inline Object::operator string(void) {
 }
 
 // 根据数字求数组的第idx个值
-inline Object& Object::operator[](int idx) {
+inline Object& Object::operator[](const int& idx) {
 	// TODO: 在此处插入 return 语句
 	if (this->_type != 2) {
 		cout << "[warn]:Incorrect type!" << endl;
@@ -439,7 +664,22 @@ inline Object& Object::operator[](int idx) {
 	return this->array_val[idx];
 }
 
-inline Object& Object::operator[](string idx) {
+inline Object& Object::operator[](int&& idx) {
+	// TODO: 在此处插入 return 语句
+	if (this->_type != 2) {
+		cout << "[warn]:Incorrect type!" << endl;
+		Object obj;
+		return obj;
+	}
+	if (idx >= this->array_val.size()) {
+		cout << "[warn]:Invalid index!" << endl;
+		Object obj;
+		return obj;
+	}
+	return this->array_val[std::move(idx)];
+}
+
+inline Object& Object::operator[](const string& idx) {
 	// TODO: 在此处插入 return 语句
 	if (this->_type != 3) {
 		cout << "[warn]:Incorrect type!" << endl;
@@ -452,6 +692,21 @@ inline Object& Object::operator[](string idx) {
 		return obj;
 	}
 	return this->obj_val[idx];
+}
+
+inline Object& Object::operator[](string&& idx) {
+	// TODO: 在此处插入 return 语句
+	if (this->_type != 3) {
+		cout << "[warn]:Incorrect type!" << endl;
+		Object obj;
+		return obj;
+	}
+	if (!this->obj_val.count(idx)) {
+		cout << "[warn]:Invalid index!" << endl;
+		Object obj;
+		return obj;
+	}
+	return this->obj_val[std::move(idx)];
 }
 
 ostream& operator<<(ostream& os, Object obj) {
