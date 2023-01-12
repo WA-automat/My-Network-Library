@@ -2,6 +2,7 @@
 
 #include<vector>
 #include<functional>
+#include<ctime>
 #include<thread>
 #include<atomic>
 #include<future>
@@ -12,6 +13,7 @@
 using namespace std;
 
 // 一个可以重复使用的线程池
+// 创建的一组工作线程都至少需要捕获一个线程
 class ThreadPool {
 
 	// 公有成员
@@ -24,7 +26,7 @@ public:
 	// 创建一组工作线程
 	// 将状态改为工作状态
 	// 参数为工作线程的数量
-	void createThreadsWorker(size_t threads);
+	void createThreadsWorker(size_t threads, int times);
 
 
 	// 将函数包装成线程入队
@@ -36,7 +38,7 @@ public:
 	// 销毁当前的这组工作线程
 	// 需要状态为工作状态
 	// 需要等待当前所有工作线程结束
-	void finishThreadsWorker(void);
+	void finishThreadsWorker(int times);
 
 	// 清空阻塞队列
 	void clearQueue(void);
@@ -44,17 +46,7 @@ public:
 
 	// 析构函数
 	// 析构前应当调用停止函数使得工作线程全部执行完毕
-	~ThreadPool() {
-
-		// 调用停止函数
-		if (state == 2) {
-			// 成员函数
-			this->finishThreadsWorker();
-		}
-
-		// 更改状态
-		state = 0;
-	}
+	~ThreadPool();
 
 
 	// 私有成员
@@ -79,7 +71,9 @@ private:
 
 // 创建一组工作线程
 // 将状态改为工作状态
-void ThreadPool::createThreadsWorker(size_t threads = 8) {
+// 参数为工作线程数与工作线程最多保持多久
+// 工作线程至少也会捕获threads个线程
+void ThreadPool::createThreadsWorker(size_t threads = 8, int times = 1000) {
 
 	// try...catch语句块
 	try {
@@ -104,18 +98,26 @@ void ThreadPool::createThreadsWorker(size_t threads = 8) {
 			// 当队列为空时，阻塞队列会阻塞该进程，直至队列被填充
 			// 当队列不为空时，从阻塞队列中拉取出来并emplace_back
 			workers.emplace_back(
-				[this](void) {
+				[this, times](void) {
+
+					auto start_time = clock();
+					auto now_time = clock();
 
 					// 死循环
 					// TODO 不应该是死循环，在使用后应当暂停它
-					for (; true;) {
+					for (; now_time - start_time <= times; now_time = clock()) {
+
+						// 当已经退出工作
+						if (state != 2) break;
 
 						// 从阻塞队列中拉取任务并执行
 						auto task = tasks.pull();
 						task();
 
-					}
+						// 超时或当前阻塞队列已经空了，则退出当前工作线程
+						if (now_time - start_time > times || tasks.empty() || state != 2) break;
 
+					}
 				});
 
 		}
@@ -143,7 +145,9 @@ void ThreadPool::createThreadsWorker(size_t threads = 8) {
 // 完成并销毁当前的这组工作线程
 // 需要状态为工作状态
 // 需要等待当前所有工作线程结束
-inline void ThreadPool::finishThreadsWorker(void) {
+// 调用这个函数不代表所有的工作线程都结束使用
+// 因为每个工作线程至少要从阻塞队列中取出一次线程
+inline void ThreadPool::finishThreadsWorker(int times = 1000) {
 
 	// try...catch语句块
 	try {
@@ -151,6 +155,9 @@ inline void ThreadPool::finishThreadsWorker(void) {
 #ifdef DEBUG
 		cout << "[Debug]:Begin finish!" << endl;
 #endif // DEBUG
+
+		// 等待时间到达
+		Sleep(times);
 
 		// 判断是否为可用线程池
 		if (!this->state) {
@@ -170,7 +177,6 @@ inline void ThreadPool::finishThreadsWorker(void) {
 			for (auto& worker : workers) {
 
 				// 工作线程不应当阻塞
-				// TODO 待定
 				worker.detach();
 
 #ifdef DEBUG
@@ -222,6 +228,19 @@ inline void ThreadPool::clearQueue(void) {
 	}	
 }
 
+// 析构函数
+inline ThreadPool::~ThreadPool() {
+
+	// 调用停止函数
+	if (state == 2) {
+		// 成员函数
+		this->finishThreadsWorker();
+	}
+
+	// 更改状态
+	state = 0;
+}
+
 // 将函数包装成线程入队
 template<typename F, class ...Args>
 inline auto ThreadPool::execute(F&& f, Args && ...args) -> future<typename std::result_of<F(Args ...)>::type> {
@@ -264,3 +283,4 @@ inline auto ThreadPool::execute(F&& f, Args && ...args) -> future<typename std::
 	}
 
 }
+

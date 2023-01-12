@@ -12,6 +12,8 @@ response.h用于引用response/Response.hpp，在.cpp文件中调用，一般直
 
 container.h用于引用container文件夹中的内容
 
+threadPool.h用于引用threadPool文件夹中的内容
+
 
 
 response文件夹：
@@ -23,3 +25,9 @@ Response.hpp包含Response类，继承自../json/JSON.hpp中的JSON类，响应�
 container文件夹：
 
 BlockQueue.hpp包含BlockQueue类，实现阻塞队列
+
+
+
+threadPool文件夹：
+
+ThreadPool.hpp包含ThreadPool类，实现线程池

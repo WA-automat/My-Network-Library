@@ -650,7 +650,7 @@ inline Object::operator string(void) {
 
 // 根据数字求数组的第idx个值
 inline Object& Object::operator[](const int& idx) {
-	// TODO: 在此处插入 return 语句
+	// 在此处插入 return 语句
 	if (this->_type != 2) {
 		cout << "[warn]:Incorrect type!" << endl;
 		Object obj;
@@ -665,7 +665,7 @@ inline Object& Object::operator[](const int& idx) {
 }
 
 inline Object& Object::operator[](int&& idx) {
-	// TODO: 在此处插入 return 语句
+	// 在此处插入 return 语句
 	if (this->_type != 2) {
 		cout << "[warn]:Incorrect type!" << endl;
 		Object obj;
@@ -680,7 +680,7 @@ inline Object& Object::operator[](int&& idx) {
 }
 
 inline Object& Object::operator[](const string& idx) {
-	// TODO: 在此处插入 return 语句
+	// 在此处插入 return 语句
 	if (this->_type != 3) {
 		cout << "[warn]:Incorrect type!" << endl;
 		Object obj;
@@ -695,7 +695,7 @@ inline Object& Object::operator[](const string& idx) {
 }
 
 inline Object& Object::operator[](string&& idx) {
-	// TODO: 在此处插入 return 语句
+	// 在此处插入 return 语句
 	if (this->_type != 3) {
 		cout << "[warn]:Incorrect type!" << endl;
 		Object obj;

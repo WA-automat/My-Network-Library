@@ -265,7 +265,7 @@ inline Object JSON::getKey(void) {
 }
 
 inline Object& JSON::operator[](const string& idx) {
-	// TODO: 在此处插入 return 语句
+	// 在此处插入 return 语句
 	if (!this->data.count(idx)) {
 		cout << "[warn]:Invalid index!" << endl;
 		Object obj;
@@ -275,7 +275,7 @@ inline Object& JSON::operator[](const string& idx) {
 }
 
 inline Object& JSON::operator[](string&& idx) {
-	// TODO: 在此处插入 return 语句
+	// 在此处插入 return 语句
 	if (!this->data.count(idx)) {
 		cout << "[warn]:Invalid index!" << endl;
 		Object obj;

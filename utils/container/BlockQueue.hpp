@@ -1,6 +1,7 @@
 #pragma once
 
 #include<list>
+#include<ctime>
 #include<mutex>
 #include<condition_variable>
 
@@ -106,6 +107,16 @@ public:
 
 		// 清空队列
 		_q.clear();
+
+	}
+
+	bool empty(void) {
+
+		// 加锁
+		unique_lock<mutex> ul(mx);
+
+		// 返回队列是否为空
+		return _q.empty();
 
 	}
 
